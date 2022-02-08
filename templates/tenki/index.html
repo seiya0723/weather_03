@@ -1,0 +1,195 @@
+{% load param_change %}
+{# ↑テンプレートタグを読み込んで使う。 #}
+
+
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>今日と明日の天気</title>
+
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+
+
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+
+
+
+</head>
+<body>
+
+    <h1 class="bg-primary text-white text-center">今日と明日の天気</h1>
+
+    <main class="container">
+
+
+        <h2>新着の天気データ</h2>
+
+        <table class="table table-striped text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>場所</th>
+                    <th>時刻</th>
+                    <th>今日の天気</th>
+                    <th>今日の最高気温</th>
+                    <th>今日の最低気温</th>
+                    <th>明日の天気</th>
+                    <th>明日の最高気温</th>
+                    <th>明日の最低気温</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for weather in weathers %}
+                <tr>
+                    <td>{{ weather.place                }}</td>
+                    <td>{{ weather.dt                   }}</td>
+                    <td>{{ weather.today                }}</td>
+                    <td>{{ weather.today_high_temp      }}℃</td>
+                    <td>{{ weather.today_low_temp       }}℃</td>
+                    <td>{{ weather.tomorrow             }}</td>
+                    <td>{{ weather.tomorrow_low_temp    }}℃</td>
+                    <td>{{ weather.tomorrow_high_temp   }}℃</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+
+        <h2>過去の天気データ</h2>
+
+        <a href="{% url 'tenki:csv_download' %}?{% url_replace request 'page' 1 %}">検索結果でダウンロード</a>
+
+        <input id="csv_download" type="button" value="このページをCSVにする">
+
+
+        <form action="" method="GET">
+            <select name="year">
+                <option value="">--年</option>
+                {% for year in years %}
+                <option value="{{ year }}">{{ year }}年</option>
+                {% endfor %}
+            </select>
+            <select name="month">
+                <option value="">--月</option>
+                {% for month in months %}
+                <option value="{{ month }}">{{ month }}月</option>
+                {% endfor %}
+            </select>
+            <input type="submit" value="検索">
+        </form>
+
+        <table class="table table-striped text-center">
+            <thead class="thead-dark">
+                <tr>
+                    <th>場所</th>
+                    <th>時刻</th>
+                    <th>今日の天気</th>
+                    <th>今日の最高気温</th>
+                    <th>今日の最低気温</th>
+                    <th>明日の天気</th>
+                    <th>明日の最高気温</th>
+                    <th>明日の最低気温</th>
+                </tr>
+            </thead>
+            <tbody id="weather_data">
+                {% for weather in all_weathers %}
+                <tr>
+                    <td>{{ weather.place                }}</td>
+                    <td>{{ weather.dt                   }}</td>
+                    <td>{{ weather.today                }}</td>
+                    <td>{{ weather.today_high_temp      }}℃</td>
+                    <td>{{ weather.today_low_temp       }}℃</td>
+                    <td>{{ weather.tomorrow             }}</td>
+                    <td>{{ weather.tomorrow_low_temp    }}℃</td>
+                    <td>{{ weather.tomorrow_high_temp   }}℃</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <ul class="pagination">
+            {% if all_weathers.has_previous %}
+            <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' all_weathers.previous_page_number %}">Prev</a></li>
+            {% endif %}
+            <li class="page-item"><span class="page-link">{{ all_weathers.number }}</span></li>
+            {% if all_weathers.has_next %}
+            <li class="page-item"><a class="page-link" href="?{% url_replace request 'page' all_weathers.next_page_number %}">Next</a></li>
+            {% endif %}
+        </ul>
+
+
+    </main>
+
+
+<script>
+
+    $("#csv_download").on("click",function(){ create_csv(); });
+
+function create_csv(){
+
+    //TODO:ここで日時を整形したほうがよい
+    console.log( $("#weather_data > tr > td:nth-child(1)") );
+
+    places              = $("#weather_data > tr > td:nth-child(1)")
+    dts                 = $("#weather_data > tr > td:nth-child(2)")
+    todays              = $("#weather_data > tr > td:nth-child(3)")
+    tomorrows           = $("#weather_data > tr > td:nth-child(4)")
+    today_high_temps    = $("#weather_data > tr > td:nth-child(5)")
+    today_low_temps     = $("#weather_data > tr > td:nth-child(6)")
+    tomorrow_high_temps = $("#weather_data > tr > td:nth-child(7)")
+    tomorrow_low_temps  = $("#weather_data > tr > td:nth-child(8)")
+
+    console.log(places.eq(2).text())
+
+    length  = places.length;
+
+    data    = []
+    for (let i=0;i<length;i++){
+        let row = [];
+
+        row.push(places.eq(i).text()             );
+        row.push(dts.eq(i).text()                );
+        row.push(todays.eq(i).text()             );
+        row.push(tomorrows.eq(i).text()          );
+        row.push(today_high_temps.eq(i).text()   );
+        row.push(today_low_temps.eq(i).text()    );
+        row.push(tomorrow_high_temps.eq(i).text());
+        row.push(tomorrow_low_temps.eq(i).text() );
+
+        data.push(row);
+    }
+
+    console.log(data);
+
+    //作った二次元配列をCSV文字列に直す。
+    let csv_string  = "";
+    for (let d of data) {
+        csv_string += d.join(",");
+        csv_string += '\r\n';
+    }
+
+    let file_name   = "test.csv";
+
+    //CSVのバイナリデータを作る
+    let blob        = new Blob([csv_string], {type: "text/csv"});
+    let uri         = URL.createObjectURL(blob);
+
+    //リンクタグを作る
+    let link        = document.createElement("a");
+    link.download   = file_name;
+    link.href       = uri;
+
+    //作ったリンクタグをクリックさせる
+    document.body.appendChild(link);
+    link.click();
+
+    //クリックしたら即リンクタグを消す
+    document.body.removeChild(link);
+    delete link;
+}
+</script>
+
+</body>
+</html>
+
